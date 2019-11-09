@@ -201,11 +201,15 @@ pub fn parse() -> Result<Command> {
     } else if let Some(mut args) = cmd {
         if let Some(exe) = args.next() {
             let cmdline = args.map(|s| s.to_owned()).collect::<Vec<_>>();
+            let mut env_vars = env::vars_os().collect::<Vec<_>>();
+            if env::var_os("RUNNING_UNDER_RR").is_some() {
+                env_vars.retain(|(k, _v)| k != "LD_PRELOAD" && k != "RUNNING_UNDER_RR");
+            }
             Ok(Command::Compile {
                 exe: exe.to_owned(),
-                cmdline: cmdline,
-                cwd: cwd,
-                env_vars: env::vars_os().collect(),
+                cmdline,
+                cwd,
+                env_vars,
             })
         } else {
             bail!("No compile command");
